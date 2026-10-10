@@ -31,6 +31,7 @@ def _status_body(config: Config, path: Path | None = None) -> str:
         f"UI backend      : {config.ui_backend}",
         f"History size    : {config.history_size}",
         f"Verbose default : {config.verbose_default}",
+        f"Reasoning(think): {config.think}",
         f"Telemetry       : {config.telemetry_enabled}",
         f"No color        : {config.no_color}",
         f"Config file     : {path or config_path()}",
@@ -71,6 +72,12 @@ def _toggle_verbose(config: Config, ui: UI) -> None:
     config.verbose_default = not config.verbose_default
 
 
+def _toggle_think(config: Config, ui: UI) -> None:
+    config.think = not config.think
+    if config.think:
+        ui.warning("Reasoning enabled. Models without thinking support will error.")
+
+
 def _toggle_color(config: Config, ui: UI) -> None:
     config.no_color = not config.no_color
 
@@ -92,8 +99,52 @@ def _pick_model(config: Config, ui: UI) -> None:
         return
     picked = ui.select("Installed models", models)
     if picked:
-        config.model = picked
+        switch_model(config, ui, picked)
         ui.success(f"Model set to {picked}.")
+
+
+def switch_model(config: Config, ui: UI, new_model: str) -> None:
+    """Select a model, offering to unload other running models first.
+
+    Ollama keeps models in RAM/VRAM for a while after use. Switching models
+    can therefore leave two loaded at once; this asks before unloading the old
+    one so we do not waste memory.
+    """
+    try:
+        running = ollama.list_running(config.ollama_url)
+    except ollama.OllamaError:
+        running = []
+    others = [name for name in running if name != new_model]
+    if others:
+        ui.warning("Currently loaded: " + ", ".join(running))
+        if ui.confirm(
+            f"Unload {', '.join(others)} so two models are not loaded at once?",
+            default=True,
+        ):
+            for name in others:
+                if ollama.unload_model(config.ollama_url, name):
+                    ui.success(f"Unloaded {name}.")
+                else:
+                    ui.warning(f"Could not unload {name}.")
+    config.model = new_model
+
+
+def _manage_loaded(config: Config, ui: UI) -> None:
+    try:
+        running = ollama.list_running(config.ollama_url)
+    except ollama.OllamaError as exc:
+        ui.error(str(exc))
+        return
+    if not running:
+        ui.info("No models are loaded right now.")
+        return
+    ui.info("Loaded models: " + ", ".join(running))
+    picked = ui.select("Unload which model? (empty to cancel)", ["<cancel>", *running])
+    if picked and picked != "<cancel>":
+        if ollama.unload_model(config.ollama_url, picked):
+            ui.success(f"Unloaded {picked}.")
+        else:
+            ui.warning(f"Could not unload {picked}.")
 
 
 def _test_connection(config: Config, ui: UI) -> None:
@@ -122,10 +173,13 @@ def run_settings(config: Config, ui: UI, path: Path | None = None) -> bool:
                   lambda: _edit_history(config, ui)),
             _Item("verbose", f"Verbose default  : {config.verbose_default}",
                   lambda: _toggle_verbose(config, ui)),
+            _Item("think", f"Reasoning (think): {config.think}",
+                  lambda: _toggle_think(config, ui)),
             _Item("telemetry", f"Telemetry (opt-in): {config.telemetry_enabled}",
                   lambda: _toggle_telemetry(config, ui)),
             _Item("color", f"No color         : {config.no_color}",
                   lambda: _toggle_color(config, ui)),
+            _Item("loaded", "Manage loaded models", lambda: _manage_loaded(config, ui)),
             _Item("test", "Test Ollama connection", lambda: _test_connection(config, ui)),
             _Item("save", "Save and exit"),
             _Item("cancel", "Exit without saving"),

@@ -42,9 +42,11 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact: ai-linux
+            artifact: build-linux
+            binary: ai-sys-buddy
           - os: windows-latest
-            artifact: ai-windows
+            artifact: build-windows
+            binary: ai-sys-buddy.exe
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -57,19 +59,12 @@ jobs:
       - name: Run tests
         run: python -m unittest discover -s tests
       - name: Build binary
-        run: pyinstaller --onefile --name ai --clean main.py
-      - name: Rename artifact (Linux)
-        if: runner.os == 'Linux'
-        run: mv dist/ai dist/ai-linux
-      - name: Rename artifact (Windows)
-        if: runner.os == 'Windows'
-        shell: bash
-        run: mv dist/ai.exe dist/ai-windows.exe
+        run: pyinstaller --onefile --name ai-sys-buddy --clean main.py
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: dist/ai-*
+          path: dist/${{ matrix.binary }}
           if-no-files-found: error
 
   release:
@@ -94,6 +89,6 @@ jobs:
           name: ${{ github.ref_name }}
           body_path: release_body.md
           files: |
-            artifacts/ai-linux/ai-linux
-            artifacts/ai-windows/ai-windows.exe
+            artifacts/build-linux/ai-sys-buddy
+            artifacts/build-windows/ai-sys-buddy.exe
           fail_on_unmatched_files: true

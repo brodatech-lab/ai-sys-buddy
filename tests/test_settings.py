@@ -62,7 +62,7 @@ class FakeUI(UI):
     def stream_start(self):
         pass
 
-    def stream_write(self, text):
+    def stream_write(self, text, style=None):
         pass
 
     def stream_end(self):
@@ -91,6 +91,15 @@ class SettingsTests(unittest.TestCase):
             settings.run_settings(cfg, ui, path=path)
             self.assertTrue(cfg.verbose_default)
             self.assertTrue(config_mod.load_config(path).verbose_default)
+
+    def test_toggle_think_then_save(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.json"
+            cfg = config_mod.Config(think=False)
+            ui = FakeUI(selections=["Reasoning", "Save and exit"])
+            settings.run_settings(cfg, ui, path=path)
+            self.assertTrue(cfg.think)
+            self.assertTrue(config_mod.load_config(path).think)
 
     def test_cancel_does_not_save(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -127,6 +136,40 @@ class SettingsTests(unittest.TestCase):
             with mock.patch.object(settings.ollama, "list_models", side_effect=settings.ollama.OllamaError("down")):
                 settings.run_settings(cfg, ui, path=path)
             self.assertIn("error", ui.kinds())
+
+    def test_switch_model_unloads_others(self) -> None:
+        from unittest import mock
+
+        cfg = config_mod.Config()
+        ui = FakeUI(confirm=True)
+        with mock.patch.object(settings.ollama, "list_running", return_value=["old:7b"]), \
+                mock.patch.object(settings.ollama, "unload_model", return_value=True) as unload:
+            settings.switch_model(cfg, ui, "new:8b")
+        self.assertEqual(cfg.model, "new:8b")
+        unload.assert_called_once_with(cfg.ollama_url, "old:7b")
+        self.assertIn("success", ui.kinds())
+
+    def test_switch_model_declined_keeps_others(self) -> None:
+        from unittest import mock
+
+        cfg = config_mod.Config()
+        ui = FakeUI(confirm=False)
+        with mock.patch.object(settings.ollama, "list_running", return_value=["old:7b"]), \
+                mock.patch.object(settings.ollama, "unload_model", return_value=True) as unload:
+            settings.switch_model(cfg, ui, "new:8b")
+        self.assertEqual(cfg.model, "new:8b")
+        unload.assert_not_called()
+
+    def test_switch_model_no_others(self) -> None:
+        from unittest import mock
+
+        cfg = config_mod.Config()
+        ui = FakeUI(confirm=True)
+        with mock.patch.object(settings.ollama, "list_running", return_value=["new:8b"]), \
+                mock.patch.object(settings.ollama, "unload_model", return_value=True) as unload:
+            settings.switch_model(cfg, ui, "new:8b")
+        self.assertEqual(cfg.model, "new:8b")
+        unload.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -33,9 +33,14 @@ class OllamaError(RuntimeError):
 
 @dataclass
 class StreamEvent:
-    """A single streamed chunk plus (on completion) the metrics."""
+    """A single streamed chunk plus (on completion) the metrics.
+
+    ``thinking`` carries reasoning tokens from thinking models (e.g. Qwen3);
+    ``text`` carries the actual answer content.
+    """
 
     text: str = ""
+    thinking: str = ""
     metrics: dict[str, int] | None = None
     done: bool = False
 
@@ -77,6 +82,42 @@ def ping(base_url: str, timeout: float = TAGS_TIMEOUT) -> bool:
         return False
 
 
+def list_running(base_url: str, timeout: float = TAGS_TIMEOUT) -> list[str]:
+    """Return the names of models currently loaded in memory (``/api/ps``)."""
+    try:
+        with httpx.Client(timeout=timeout) as client:
+            response = client.get(_endpoint(base_url, "/api/ps"))
+            response.raise_for_status()
+            data = response.json()
+    except httpx.ConnectError as exc:
+        raise OllamaError(f"Cannot reach Ollama at {base_url}") from exc
+    except (httpx.HTTPError, ValueError) as exc:
+        raise OllamaError(f"Failed to read running models: {exc}") from exc
+
+    names: list[str] = []
+    for entry in data.get("models") or []:
+        name = entry.get("name") or entry.get("model")
+        if name:
+            names.append(name)
+    return names
+
+
+def unload_model(base_url: str, model: str, timeout: float = TAGS_TIMEOUT) -> bool:
+    """Ask Ollama to unload a model immediately (frees RAM/VRAM).
+
+    This only instructs the model server; it never runs shell commands.
+    """
+    try:
+        with httpx.Client(timeout=timeout) as client:
+            response = client.post(
+                _endpoint(base_url, "/api/generate"),
+                json={"model": model, "keep_alive": 0},
+            )
+            return response.status_code == 200
+    except httpx.HTTPError:
+        return False
+
+
 def _extract_metrics(data: dict) -> dict[str, int]:
     metrics: dict[str, int] = {}
     for key in _METRIC_KEYS:
@@ -92,13 +133,19 @@ def stream_chat(
     messages: Sequence[dict],
     *,
     timeout: float = DEFAULT_TIMEOUT,
+    think: bool = False,
 ) -> Iterator[StreamEvent]:
     """Stream a chat completion, yielding text chunks and final metrics.
+
+    ``think`` controls reasoning on thinking models. ``False`` (the default)
+    disables the reasoning phase so answers arrive directly; ``True`` enables
+    it. Sending ``False`` is safe for every model, while ``True`` errors on
+    models that do not support thinking.
 
     Yields :class:`StreamEvent` objects. The last event has ``done=True`` and
     carries the performance metrics (when the server provides them).
     """
-    payload = {"model": model, "messages": list(messages), "stream": True}
+    payload = {"model": model, "messages": list(messages), "stream": True, "think": think}
     try:
         with httpx.Client(timeout=timeout) as client:
             with client.stream("POST", _endpoint(base_url, "/api/chat"), json=payload) as response:
@@ -114,11 +161,17 @@ def stream_chat(
                         data = json.loads(line)
                     except json.JSONDecodeError:
                         continue
-                    chunk = (data.get("message") or {}).get("content", "")
+                    if data.get("error"):
+                        raise OllamaError(str(data["error"]))
+                    message = data.get("message") or {}
+                    chunk = message.get("content", "")
+                    thinking = message.get("thinking", "")
                     done = bool(data.get("done"))
                     metrics = _extract_metrics(data) if done else None
-                    if chunk or done:
-                        yield StreamEvent(text=chunk, metrics=metrics, done=done)
+                    if chunk or thinking or done:
+                        yield StreamEvent(
+                            text=chunk, thinking=thinking, metrics=metrics, done=done
+                        )
     except httpx.ConnectError as exc:
         raise OllamaError(f"Cannot reach Ollama at {base_url}") from exc
     except httpx.HTTPError as exc:
@@ -131,9 +184,10 @@ def chat(
     messages: Sequence[dict],
     *,
     timeout: float = DEFAULT_TIMEOUT,
+    think: bool = False,
 ) -> str:
     """Convenience helper that collects a full streamed reply into a string."""
     parts: list[str] = []
-    for event in stream_chat(base_url, model, messages, timeout=timeout):
+    for event in stream_chat(base_url, model, messages, timeout=timeout, think=think):
         parts.append(event.text)
     return "".join(parts)

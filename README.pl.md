@@ -26,13 +26,13 @@ diagnostyce, uczy komend i pokazuje metryki wydajności modeli.
 
 ### Gotowe binarki
 
-Pobierz najnowszy `ai-linux` lub `ai-windows.exe` ze strony
-[Releases](https://github.com/brodatech-lab/ai-sys-buddy/releases), nadaj prawa
-wykonania (Linux) i umieść plik w `PATH`.
+Pobierz najnowszy `ai-sys-buddy` (Linux) lub `ai-sys-buddy.exe` (Windows) ze
+strony [Releases](https://github.com/brodatech-lab/ai-sys-buddy/releases), nadaj
+prawa wykonania (Linux) i umieść plik w `PATH`.
 
 ```bash
-chmod +x ai-linux
-mv ai-linux ~/.local/bin/ai
+chmod +x ai-sys-buddy
+mv ai-sys-buddy ~/.local/bin/ai
 ```
 
 ### Ze źródeł (Python 3.10+)
@@ -78,6 +78,7 @@ ai -v "wylistuj otwarte porty"   # tryb verbose z metrykami wydajności
 | Opcja | Opis |
 | --- | --- |
 | `-v`, `--verbose` | Pokaż metryki wydajności modelu. |
+| `--think` | Włącz rozumowanie modelu (tylko modele myślące). |
 | `--model NAME` | Nadpisz model dla tego uruchomienia. |
 | `--url URL` | Nadpisz adres Ollamy dla tego uruchomienia. |
 | `--backend rich\|standard` | Wybór backendu UI. |
@@ -100,6 +101,7 @@ Przechowywana per użytkownik:
 | `ui_backend` | `rich` | `rich` albo `standard`. |
 | `history_size` | `4` | Liczba wymian w pamięci rozmowy (FIFO). |
 | `verbose_default` | `false` | Zawsze pokazuj metryki. |
+| `think` | `false` | Włącz rozumowanie modelu (tylko modele myślące). |
 | `telemetry_enabled` | `false` | Zarezerwowane pod przyszłą telemetrię (opt-in). |
 | `no_color` | `false` | Wyłącz kolory. |
 
@@ -121,7 +123,7 @@ python -m unittest discover -s tests
 ### Budowanie samodzielnej binarki
 
 ```bash
-pyinstaller --onefile --name ai --clean main.py
+pyinstaller --onefile --name ai-sys-buddy --clean main.py
 ```
 
 ### Wydania

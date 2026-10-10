@@ -11,6 +11,28 @@ sections below as the GitHub release notes.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-10
+
+### What's New
+- The settings panel can now view and unload currently loaded models, and
+  switching models offers to free the previous one so two models never stay
+  loaded at once.
+- Reasoning can be toggled: `--think` on the command line, or the
+  "Reasoning (think)" switch in settings.
+
+### Fixed
+- Thinking models (e.g. Qwen3) now answer directly: reasoning is disabled by
+  default via the Ollama `think` flag, so the model no longer appears to hang
+  before its answer.
+- Thinking models (e.g. Qwen3) no longer appear to hang: reasoning tokens sent
+  in `message.thinking` are now streamed (dimmed) instead of being ignored.
+
+### Changed
+- `--config` is now honored when saving, and opening the settings panel no
+  longer consumes piped stdin.
+- Release binaries are now named `ai-sys-buddy` (Linux) and `ai-sys-buddy.exe`
+  (Windows).
+
 ## [0.1.0] - 2026-10-10
 
 ### What's New
@@ -30,5 +52,6 @@ sections below as the GitHub release notes.
 ### Changed
 - Nothing yet.
 
-[Unreleased]: https://github.com/brodatech-lab/ai-sys-buddy/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/brodatech-lab/ai-sys-buddy/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.1
 [0.1.0]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.0

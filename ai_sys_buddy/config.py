@@ -43,6 +43,7 @@ class Config:
     ui_backend: str = "rich"
     history_size: int = DEFAULT_HISTORY_SIZE
     verbose_default: bool = False
+    think: bool = False
     telemetry_enabled: bool = False
     no_color: bool = False
 

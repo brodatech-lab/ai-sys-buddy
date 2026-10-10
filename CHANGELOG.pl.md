@@ -5,11 +5,33 @@ Wszystkie istotne zmiany w projekcie są opisane w tym pliku.
 Format oparty na [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/),
 wersjonowanie zgodne z [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-Wydania powstają automatycznie: wypchnięcie tagu, np. `v0.1.0`, uruchamia
+Wydania powstają automatycznie: wypchnięcie tagu, np. `v0.1.1`, uruchamia
 workflow wydania, który publikuje opis z sekcji "What's New", "Fixed" i
 "Changed" angielskiego pliku `CHANGELOG.md` (to on trafia do GitHub Releases).
 
 ## [Unreleased]
+
+## [0.1.1] - 2026-10-10
+
+### What's New
+- Panel ustawień pozwala podejrzeć i wyładować aktualnie załadowane modele, a
+  przy zmianie modelu proponuje zwolnienie poprzedniego, aby nigdy nie trzymać
+  dwóch naraz.
+- Rozumowanie można przełączać: flaga `--think` w wierszu poleceń lub
+  przełącznik „Reasoning (think)" w ustawieniach.
+
+### Fixed
+- Modele myślące (np. Qwen3) odpowiadają teraz od razu: rozumowanie jest
+  domyślnie wyłączone flagą Ollamy `think`, więc model nie „wisi" przed
+  odpowiedzią.
+- Modele myślące (np. Qwen3) nie „wiszą" już: tokeny rozumowania wysyłane w
+  `message.thinking` są teraz strumieniowane (przygaszone) zamiast ignorowane.
+
+### Changed
+- `--config` jest teraz respektowany przy zapisie, a otwarcie ustawień nie
+  zjada już wejścia z potoku.
+- Binarki wydania nazywają się teraz `ai-sys-buddy` (Linux) oraz
+  `ai-sys-buddy.exe` (Windows).
 
 ## [0.1.0] - 2026-10-10
 
@@ -32,5 +54,6 @@ workflow wydania, który publikuje opis z sekcji "What's New", "Fixed" i
 ### Changed
 - Na razie brak.
 
-[Unreleased]: https://github.com/brodatech-lab/ai-sys-buddy/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/brodatech-lab/ai-sys-buddy/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.1
 [0.1.0]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.0

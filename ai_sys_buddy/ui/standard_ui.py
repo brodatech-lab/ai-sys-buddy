@@ -116,8 +116,8 @@ class StandardUI(UI):
     def stream_start(self) -> None:
         sys.stdout.flush()
 
-    def stream_write(self, text: str) -> None:
-        sys.stdout.write(text)
+    def stream_write(self, text: str, style: str | None = None) -> None:
+        sys.stdout.write(self._paint(text, style))
         sys.stdout.flush()
 
     def stream_end(self) -> None:

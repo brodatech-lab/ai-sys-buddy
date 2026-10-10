@@ -70,8 +70,10 @@ class RichUI(UI):
         # Nothing to prepare; rich prints incrementally.
         return None
 
-    def stream_write(self, text: str) -> None:
-        self.console.print(text, end="", markup=False, highlight=False, soft_wrap=True)
+    def stream_write(self, text: str, style: str | None = None) -> None:
+        self.console.print(
+            text, end="", style=style, markup=False, highlight=False, soft_wrap=True
+        )
 
     def stream_end(self) -> None:
         self.console.print()

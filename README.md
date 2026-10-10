@@ -26,13 +26,13 @@ performance metrics for your models.
 
 ### Prebuilt binaries
 
-Download the latest `ai-linux` or `ai-windows.exe` from the
-[Releases](https://github.com/brodatech-lab/ai-sys-buddy/releases) page, make it
-executable (Linux) and put it on your `PATH`.
+Download the latest `ai-sys-buddy` (Linux) or `ai-sys-buddy.exe` (Windows) from
+the [Releases](https://github.com/brodatech-lab/ai-sys-buddy/releases) page,
+make it executable (Linux) and put it on your `PATH`.
 
 ```bash
-chmod +x ai-linux
-mv ai-linux ~/.local/bin/ai
+chmod +x ai-sys-buddy
+mv ai-sys-buddy ~/.local/bin/ai
 ```
 
 ### From source (Python 3.10+)
@@ -77,6 +77,7 @@ ai -v "list open ports"     # verbose mode with performance metrics
 | Option | Description |
 | --- | --- |
 | `-v`, `--verbose` | Show model performance metrics. |
+| `--think` | Enable model reasoning (thinking models only). |
 | `--model NAME` | Override the model for this run. |
 | `--url URL` | Override the Ollama URL for this run. |
 | `--backend rich\|standard` | Choose the UI backend. |
@@ -99,6 +100,7 @@ Stored per user:
 | `ui_backend` | `rich` | `rich` or `standard`. |
 | `history_size` | `4` | Conversation exchanges kept in memory (FIFO). |
 | `verbose_default` | `false` | Always show metrics. |
+| `think` | `false` | Enable model reasoning (thinking models only). |
 | `telemetry_enabled` | `false` | Reserved for future opt-in hardware telemetry. |
 | `no_color` | `false` | Disable colors. |
 
@@ -119,7 +121,7 @@ python -m unittest discover -s tests
 ### Building a standalone binary
 
 ```bash
-pyinstaller --onefile --name ai --clean main.py
+pyinstaller --onefile --name ai-sys-buddy --clean main.py
 ```
 
 ### Releases

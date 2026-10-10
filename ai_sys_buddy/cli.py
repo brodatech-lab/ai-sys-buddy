@@ -11,7 +11,7 @@ from . import __version__
 from .config import Config, UI_BACKENDS, config_path, load_config, save_config
 from . import ollama, profiler, prompt
 from .osenv import get_context
-from .settings import run_settings
+from .settings import run_settings, switch_model
 from .ui import UI, get_ui
 
 PROG = "ai"
@@ -28,6 +28,7 @@ Usage:
 
 Options:
   -v, --verbose    show model performance metrics
+      --think      enable model reasoning (thinking models only)
       --model NAME override the model for this run
       --url URL    override the Ollama URL for this run
       --backend B  UI backend: rich | standard
@@ -47,6 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog=PROG, add_help=False, description=__doc__)
     parser.add_argument("-h", "--help", action="store_true")
     parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("--think", action="store_true", help="enable model reasoning")
     parser.add_argument("--no-color", action="store_true")
     parser.add_argument("--model")
     parser.add_argument("--url")
@@ -106,7 +108,7 @@ def ensure_model(config: Config, ui: UI, config_file: Path | None = None) -> str
     chosen = ui.select("Pick a model to use", models)
     if not chosen:
         return None
-    config.model = chosen
+    switch_model(config, ui, chosen)
     save_config(config, config_file)
     ui.success(f"Saved model: {chosen}")
     return chosen
@@ -119,14 +121,29 @@ def _messages(config: Config, history: prompt.History, user_content: str) -> lis
 
 
 def stream_reply(config: Config, ui: UI, messages: list[dict]) -> tuple[str, dict | None]:
-    """Stream the reply to the terminal and return (text, metrics)."""
+    """Stream the reply to the terminal and return (text, metrics).
+
+    Thinking models (e.g. Qwen3) emit reasoning tokens before the answer; those
+    are streamed dimmed so the tool never looks frozen, while only the actual
+    answer content is collected and remembered.
+    """
     parts: list[str] = []
     metrics: dict | None = None
+    thinking_started = False
+    answer_started = False
     ui.stream_start()
     try:
-        for event in ollama.stream_chat(config.ollama_url, config.model, messages):
+        for event in ollama.stream_chat(
+            config.ollama_url, config.model, messages, think=config.think
+        ):
+            if event.thinking:
+                ui.stream_write(event.thinking, style="dim")
+                thinking_started = True
             if event.text:
+                if thinking_started and not answer_started:
+                    ui.stream_write("\n")
                 ui.stream_write(event.text)
+                answer_started = True
                 parts.append(event.text)
             if event.done:
                 metrics = event.metrics
@@ -139,7 +156,9 @@ def collect_reply(config: Config, ui: UI, messages: list[dict]) -> tuple[str, di
     """Collect the reply without printing (used for framed output)."""
     parts: list[str] = []
     metrics: dict | None = None
-    for event in ollama.stream_chat(config.ollama_url, config.model, messages):
+    for event in ollama.stream_chat(
+        config.ollama_url, config.model, messages, think=config.think
+    ):
         parts.append(event.text)
         if event.done:
             metrics = event.metrics
@@ -230,6 +249,8 @@ def run(argv: list[str] | None = None) -> int:
         config.ui_backend = args.backend
     if args.no_color:
         config.no_color = True
+    if args.think:
+        config.think = True
 
     ui = get_ui(config)
     verbose = args.verbose or config.verbose_default
