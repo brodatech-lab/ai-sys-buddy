@@ -11,6 +11,20 @@ workflow wydania, który publikuje opis z sekcji "What's New", "Fixed" i
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-10
+
+### What's New
+- Instalator dla Windows `install.ps1`: instaluje `ai-sys-buddy.exe`, tworzy
+  komendę `ai`, dodaje ją do PATH użytkownika i konfiguruje adres Ollamy oraz
+  model. Instalator jest też dołączany do każdego wydania.
+
+### Fixed
+- Plik konfiguracji jest teraz czytany z tolerancją na BOM UTF-8, dzięki czemu
+  configi zapisane/edytowane przez narzędzia Windows są akceptowane.
+
+### Changed
+- Na razie brak.
+
 ## [0.1.1] - 2026-10-10
 
 ### What's New
@@ -54,6 +68,7 @@ workflow wydania, który publikuje opis z sekcji "What's New", "Fixed" i
 ### Changed
 - Na razie brak.
 
-[Unreleased]: https://github.com/brodatech-lab/ai-sys-buddy/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/brodatech-lab/ai-sys-buddy/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.2
 [0.1.1]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.1
 [0.1.0]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.0

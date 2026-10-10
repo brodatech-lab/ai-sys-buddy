@@ -35,6 +35,33 @@ chmod +x ai-sys-buddy
 mv ai-sys-buddy ~/.local/bin/ai
 ```
 
+### Windows
+
+Pobierz `install.ps1` ze strony
+[Releases](https://github.com/brodatech-lab/ai-sys-buddy/releases) i uruchom go
+(opcjonalnie połóż obok `ai-sys-buddy.exe`, aby zainstalować offline):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+Instalator kopiuje binarkę do `%LOCALAPPDATA%\Programs\ai-sys-buddy`, tworzy
+komendę `ai`, dodaje ją do Twojego `PATH` i pyta o adres Ollamy oraz model. Po
+instalacji otwórz nowy terminal i używaj `ai` dokładnie tak jak na Linuksie.
+
+Ponieważ repozytorium jest prywatne, pobranie wydania ze skryptu wymaga tokena
+GitHub. Wersja „one-liner”:
+
+```powershell
+$env:GITHUB_TOKEN="ghp_xxx"; irm -Headers @{Authorization="token $env:GITHUB_TOKEN"} https://raw.githubusercontent.com/brodatech-lab/ai-sys-buddy/main/install.ps1 | iex
+```
+
+Deinstalacja:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -Uninstall
+```
+
 ### Ze źródeł (Python 3.10+)
 
 ```bash

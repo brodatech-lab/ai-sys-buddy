@@ -11,6 +11,20 @@ sections below as the GitHub release notes.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-10
+
+### What's New
+- Windows installer `install.ps1`: installs `ai-sys-buddy.exe`, creates an `ai`
+  command, adds it to the user PATH and configures your Ollama URL and model.
+  The installer is also attached to every release.
+
+### Fixed
+- The config file is now read tolerantly of a UTF-8 BOM, so configs written or
+  edited by Windows tools are accepted.
+
+### Changed
+- Nothing yet.
+
 ## [0.1.1] - 2026-10-10
 
 ### What's New
@@ -52,6 +66,7 @@ sections below as the GitHub release notes.
 ### Changed
 - Nothing yet.
 
-[Unreleased]: https://github.com/brodatech-lab/ai-sys-buddy/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/brodatech-lab/ai-sys-buddy/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.2
 [0.1.1]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.1
 [0.1.0]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.0

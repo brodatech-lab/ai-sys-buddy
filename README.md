@@ -35,6 +35,34 @@ chmod +x ai-sys-buddy
 mv ai-sys-buddy ~/.local/bin/ai
 ```
 
+### Windows
+
+Download `install.ps1` from the [Releases](https://github.com/brodatech-lab/ai-sys-buddy/releases)
+page and run it (optionally place `ai-sys-buddy.exe` next to it to install
+offline):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+The installer copies the binary to `%LOCALAPPDATA%\Programs\ai-sys-buddy`,
+creates an `ai` command, adds it to your user `PATH`, and asks for your Ollama
+URL and model. Open a new terminal afterwards, then use `ai` exactly like on
+Linux.
+
+Because the repository is private, downloading a release from the script needs
+a GitHub token. The one-liner form is:
+
+```powershell
+$env:GITHUB_TOKEN="ghp_xxx"; irm -Headers @{Authorization="token $env:GITHUB_TOKEN"} https://raw.githubusercontent.com/brodatech-lab/ai-sys-buddy/main/install.ps1 | iex
+```
+
+Uninstall:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -Uninstall
+```
+
 ### From source (Python 3.10+)
 
 ```bash

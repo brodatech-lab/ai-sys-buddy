@@ -91,4 +91,5 @@ jobs:
           files: |
             artifacts/build-linux/ai-sys-buddy
             artifacts/build-windows/ai-sys-buddy.exe
+            install.ps1
           fail_on_unmatched_files: true

@@ -33,6 +33,13 @@ class ConfigTests(unittest.TestCase):
             loaded = config.load_config(Path(tmp) / "nope.json")
             self.assertEqual(loaded, config.Config())
 
+    def test_load_config_with_bom(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.json"
+            path.write_bytes(b"\xef\xbb\xbf" + b'{"model": "m"}')
+            cfg = config.load_config(path)
+            self.assertEqual(cfg.model, "m")
+
     def test_invalid_json_returns_defaults(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "config.json"

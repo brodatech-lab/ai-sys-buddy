@@ -74,7 +74,8 @@ def load_config(path: Path | None = None) -> Config:
     """Load the config, falling back to defaults when missing or invalid."""
     target = path or config_path()
     try:
-        raw = target.read_text(encoding="utf-8")
+        # utf-8-sig also handles files written with a BOM (e.g. by PowerShell).
+        raw = target.read_text(encoding="utf-8-sig")
     except FileNotFoundError:
         return Config()
     except OSError:
