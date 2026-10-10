@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    name: Validate version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.info.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: info
+        name: Check tag matches __version__
+        run: |
+          python - <<'PY'
+          import os, re, pathlib, sys
+          tag = os.environ["GITHUB_REF_NAME"].lstrip("v")
+          src = pathlib.Path("ai_sys_buddy/__init__.py").read_text(encoding="utf-8")
+          match = re.search(r'__version__\s*=\s*"([^"]+)"', src)
+          if not match:
+              sys.exit("could not find __version__ in ai_sys_buddy/__init__.py")
+          version = match.group(1)
+          if tag != version:
+              sys.exit(f"tag {tag!r} does not match __version__ {version!r}")
+          print(f"version OK: {version}")
+          PY
+          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build (${{ matrix.os }})
+    needs: validate
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: ai-linux
+          - os: windows-latest
+            artifact: ai-windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . pyinstaller
+      - name: Run tests
+        run: python -m unittest discover -s tests
+      - name: Build binary
+        run: pyinstaller --onefile --name ai --clean main.py
+      - name: Rename artifact (Linux)
+        if: runner.os == 'Linux'
+        run: mv dist/ai dist/ai-linux
+      - name: Rename artifact (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: mv dist/ai.exe dist/ai-windows.exe
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/ai-*
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: [validate, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Build release notes from CHANGELOG.md
+        run: |
+          python .github/scripts/extract_changelog.py "${{ needs.validate.outputs.version }}" \
+            > release_body.md
+          echo "----- release body -----"
+          cat release_body.md
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          body_path: release_body.md
+          files: |
+            artifacts/ai-linux/ai-linux
+            artifacts/ai-windows/ai-windows.exe
+          fail_on_unmatched_files: true

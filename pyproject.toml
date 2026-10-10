@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-sys-buddy"
+version = "0.1.0"
+description = "A lightweight, privacy-first system buddy CLI that talks to a local Ollama instance."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }
+authors = [{ name = "brodatech-lab" }]
+keywords = ["ollama", "sysadmin", "cli", "assistant", "buddy", "diagnostics"]
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: System Administrators",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Topic :: System :: Systems Administration",
+]
+dependencies = [
+    "rich>=13.7",
+    "httpx>=0.25",
+    "questionary>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pyinstaller>=6.0"]
+
+[project.scripts]
+ai = "ai_sys_buddy.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/brodatech-lab/ai-sys-buddy"
+Repository = "https://github.com/brodatech-lab/ai-sys-buddy"
+
+[tool.setuptools.packages.find]
+include = ["ai_sys_buddy*"]
+
+[tool.setuptools.package-data]
+ai_sys_buddy = ["py.typed"]
