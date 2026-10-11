@@ -16,8 +16,6 @@ for your models.
 > model only produces text and formats commands in frames; you review and run
 > them yourself. Nothing is ever sent anywhere except your own Ollama server.
 
-![ai-sys-buddy answering a diagnostic question](docs/buddy_prompt.png)
-
 ## Usage
 
 ### Ask a question
