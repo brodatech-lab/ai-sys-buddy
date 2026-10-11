@@ -95,6 +95,8 @@ ai                          # interactive mode
 ai "how do I check disk usage on Linux?"
 ai ?chmod                   # encyclopedia entry for chmod
 ai s                        # settings menu (alias: ai settings)
+ai perf                     # benchmark the current model
+ai perf all                 # benchmark every installed model
 ai help                     # help
 sudo journalctl -u pveproxy -n 50 | ai "what is going on?"
 ai -v "list open ports"     # verbose mode with performance metrics
@@ -106,6 +108,8 @@ ai -v "list open ports"     # verbose mode with performance metrics
 | --- | --- |
 | `-v`, `--verbose` | Show model performance metrics. |
 | `--think` | Enable model reasoning (thinking models only). |
+| `--no-markdown` | Print plain text instead of rendered Markdown. |
+| `--theme NAME` | Syntax highlighting theme (rich backend). |
 | `--model NAME` | Override the model for this run. |
 | `--url URL` | Override the Ollama URL for this run. |
 | `--backend rich\|standard` | Choose the UI backend. |
@@ -129,7 +133,9 @@ Stored per user:
 | `history_size` | `4` | Conversation exchanges kept in memory (FIFO). |
 | `verbose_default` | `false` | Always show metrics. |
 | `think` | `false` | Enable model reasoning (thinking models only). |
-| `telemetry_enabled` | `false` | Reserved for future opt-in hardware telemetry. |
+| `markdown` | `true` | Render answers as Markdown in a panel. |
+| `code_theme` | `monokai` | Syntax highlighting theme for code blocks. |
+| `telemetry_enabled` | `false` | Show the local hardware + performance telemetry panel after each answer. |
 | `no_color` | `false` | Disable colors. |
 
 ## Privacy & security

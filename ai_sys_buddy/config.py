@@ -17,7 +17,21 @@ from . import APP_NAME, DEFAULT_PERSONA
 
 DEFAULT_OLLAMA_URL = "http://127.0.0.1:11434"
 DEFAULT_HISTORY_SIZE = 4
+DEFAULT_CODE_THEME = "monokai"
 UI_BACKENDS = ("rich", "standard")
+# Pygments themes offered for syntax highlighting (used by the rich backend).
+CODE_THEMES = (
+    "monokai",
+    "dracula",
+    "github-dark",
+    "solarized-dark",
+    "solarized-light",
+    "one-dark",
+    "native",
+    "vim",
+    "friendly",
+    "bw",
+)
 
 
 def config_dir() -> Path:
@@ -44,6 +58,8 @@ class Config:
     history_size: int = DEFAULT_HISTORY_SIZE
     verbose_default: bool = False
     think: bool = False
+    markdown: bool = True
+    code_theme: str = DEFAULT_CODE_THEME
     telemetry_enabled: bool = False
     no_color: bool = False
 
@@ -65,6 +81,8 @@ class Config:
             problems.append(f"ui_backend must be one of {', '.join(UI_BACKENDS)}")
         if not 1 <= self.history_size <= 20:
             problems.append("history_size must be between 1 and 20")
+        if self.code_theme not in CODE_THEMES:
+            problems.append(f"code_theme must be one of {', '.join(CODE_THEMES)}")
         if not self.persona_name.strip():
             problems.append("persona_name must not be empty")
         return problems

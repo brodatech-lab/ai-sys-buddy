@@ -27,7 +27,7 @@ def get_ui(config: Config) -> UI:
         try:
             from .rich_ui import RichUI
 
-            return RichUI(color=color)
+            return RichUI(color=color, code_theme=config.code_theme)
         except ImportError:
             pass
     from .standard_ui import StandardUI

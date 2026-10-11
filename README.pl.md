@@ -95,6 +95,8 @@ ai                          # tryb interaktywny
 ai "jak sprawdzić użycie dysku na Linuksie?"
 ai ?chmod                   # hasło encyklopedii dla chmod
 ai s                        # menu ustawień (alias: ai settings)
+ai perf                     # benchmark bieżącego modelu
+ai perf all                 # benchmark wszystkich zainstalowanych modeli
 ai help                     # pomoc
 sudo journalctl -u pveproxy -n 50 | ai "co tu się dzieje?"
 ai -v "wylistuj otwarte porty"   # tryb verbose z metrykami wydajności
@@ -106,6 +108,8 @@ ai -v "wylistuj otwarte porty"   # tryb verbose z metrykami wydajności
 | --- | --- |
 | `-v`, `--verbose` | Pokaż metryki wydajności modelu. |
 | `--think` | Włącz rozumowanie modelu (tylko modele myślące). |
+| `--no-markdown` | Wypisz czysty tekst zamiast renderowanego Markdown. |
+| `--theme NAME` | Motyw kolorowania kodu (backend rich). |
 | `--model NAME` | Nadpisz model dla tego uruchomienia. |
 | `--url URL` | Nadpisz adres Ollamy dla tego uruchomienia. |
 | `--backend rich\|standard` | Wybór backendu UI. |
@@ -129,7 +133,9 @@ Przechowywana per użytkownik:
 | `history_size` | `4` | Liczba wymian w pamięci rozmowy (FIFO). |
 | `verbose_default` | `false` | Zawsze pokazuj metryki. |
 | `think` | `false` | Włącz rozumowanie modelu (tylko modele myślące). |
-| `telemetry_enabled` | `false` | Zarezerwowane pod przyszłą telemetrię (opt-in). |
+| `markdown` | `true` | Renderuj odpowiedzi jako Markdown w ramce. |
+| `code_theme` | `monokai` | Motyw kolorowania składni dla bloków kodu. |
+| `telemetry_enabled` | `false` | Pokazuj lokalny panel telemetrii (sprzęt + wydajność) po każdej odpowiedzi. |
 | `no_color` | `false` | Wyłącz kolory. |
 
 ## Prywatność i bezpieczeństwo
