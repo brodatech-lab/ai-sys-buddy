@@ -3,12 +3,14 @@
 **English** | [Polski](README.pl.md)
 
 A lightweight, privacy-first terminal assistant with a friendly **sysadmin
-buddy** personality. It talks to a local or remote [Ollama](https://ollama.com)
-instance, helps you diagnose problems, teaches commands, and shows you
-performance metrics for your models.
+buddy** personality. Purpose-built to run on older hardware with small, fast AI
+models, it talks to a local or remote [Ollama](https://ollama.com) instance,
+helps you diagnose problems, teaches commands, and shows you performance metrics
+for your models.
 
-> **Runs on modest hardware.** It works on older machines and small models;
-> with integrated graphics (or no GPU) the computation is simply done by the CPU.
+> **Built for modest hardware.** Older machines with small, fast AI models are
+> the sweet spot; with integrated graphics (or no GPU) the computation is simply
+> done by the CPU.
 
 > **Read-only by design.** `ai-sys-buddy` never runs commands for you. The
 > model only produces text and formats commands in frames; you review and run
@@ -26,8 +28,9 @@ performance metrics for your models.
 - **Telemetry & benchmark** — `ai perf` compares models; an optional local
   hardware + performance panel is shown when enabled.
 - **Settings menu** — pick the model, URL, persona, theme and backend with arrows.
-- **Runs on modest hardware** — works on older machines and small models. With
-  integrated graphics (or no GPU) the computation is simply done by the CPU.
+- **Runs on modest hardware** — purpose-built for older machines and small, fast
+  AI models. With integrated graphics (or no GPU) the computation is simply done
+  by the CPU.
 - **Zero-dependency fallback** — a `standard` UI backend works without `rich`.
 
 ## Requirements

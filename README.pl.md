@@ -3,11 +3,12 @@
 [English](README.md) | **Polski**
 
 Lekki, prywatny asystent terminalowy z przyjazną osobowością **kumpla-sysadmina**.
-Łączy się z lokalną lub zdalną instancją [Ollamy](https://ollama.com), pomaga w
-diagnostyce, uczy komend i pokazuje metryki wydajności modeli.
+Stworzony z myślą o starszym sprzęcie i małych, szybkich modelach AI, łączy się z
+lokalną lub zdalną instancją [Ollamy](https://ollama.com), pomaga w diagnostyce,
+uczy komend i pokazuje metryki wydajności modeli.
 
-> **Działa na skromnym sprzęcie.** Rusza na starszych maszynach i małych
-> modelach; przy zintegrowanej grafice (lub bez GPU) obliczenia wykonuje CPU.
+> **Zbudowany na skromny sprzęt.** Stare maszyny i małe, szybkie modele AI to
+> jego żywioł; przy zintegrowanej grafice (lub bez GPU) obliczenia wykonuje CPU.
 
 > **Domyślnie tylko odczyt.** `ai-sys-buddy` nigdy nie wykonuje komend za Ciebie.
 > Model produkuje wyłącznie tekst i formatuje komendy w ramkach; Ty je
@@ -26,9 +27,9 @@ diagnostyce, uczy komend i pokazuje metryki wydajności modeli.
 - **Telemetria i benchmark** — `ai perf` porównuje modele; opcjonalny lokalny
   panel sprzęt + wydajność pokazuje się, gdy go włączysz.
 - **Menu ustawień** — wybór modelu, URL, osobowości, motywu i backendu strzałkami.
-- **Działa na skromnym sprzęcie** — rusza na starszych maszynach i małych
-  modelach. Przy zintegrowanej grafice (lub bez GPU) obliczenia wykonuje po
-  prostu CPU.
+- **Działa na skromnym sprzęcie** — stworzony dla starszych maszyn i małych,
+  szybkich modeli AI. Przy zintegrowanej grafice (lub bez GPU) obliczenia
+  wykonuje po prostu CPU.
 - **Awaryjny tryb bez zależności** — backend `standard` działa bez `rich`.
 
 ## Wymagania
