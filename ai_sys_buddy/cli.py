@@ -286,9 +286,10 @@ def run_status(config: Config, ui: UI, verbose: bool = False) -> None:
     """Show a friendly system status briefing (``ai status``)."""
     data = briefing.gather_briefing()
     snapshot = briefing.render_snapshot(data)
+    table = briefing.render_markdown(data)
     if not config.model:
         # No model selected yet: show the raw snapshot instead.
-        ui.render_markdown(f"```\n{snapshot}\n```", title="status")
+        ui.render_markdown(table, title="status")
         return
     context = get_context()
     system_prompt = prompt.build_system_prompt(context, config.persona_name)
@@ -299,9 +300,10 @@ def run_status(config: Config, ui: UI, verbose: bool = False) -> None:
             reply, metrics = collect_reply(config, ui, messages, status=status)
     except ollama.OllamaError as exc:
         ui.error(str(exc))
-        ui.render_markdown(f"```\n{snapshot}\n```", title="status")
+        ui.render_markdown(table, title="status")
         return
-    ui.render_markdown(reply.strip(), title="status")
+    body = table if not reply.strip() else f"{table}\n\n{reply.strip()}"
+    ui.render_markdown(body, title="status")
     if config.telemetry_enabled:
         show_telemetry(config, ui, metrics)
     elif verbose:

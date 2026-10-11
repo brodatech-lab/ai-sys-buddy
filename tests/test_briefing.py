@@ -43,13 +43,20 @@ class BriefingTests(unittest.TestCase):
         self.assertIn("CPU:", snapshot)
         self.assertIn("Uptime:", snapshot)
 
+    def test_render_markdown_is_a_table(self) -> None:
+        table = briefing.render_markdown(briefing.gather_briefing())
+        self.assertIn("| Metric | Value |", table)
+        self.assertIn("Uptime", table)
+        self.assertIn("RAM", table)
+
     def test_run_status_without_model_shows_snapshot(self) -> None:
         ui = _FakeUI()
         run_status(Config(model=""), ui)
         self.assertTrue(ui.rendered)
         title, body = ui.rendered[0]
         self.assertEqual(title, "status")
-        self.assertIn("Uptime:", body)
+        self.assertIn("Uptime", body)
+        self.assertIn("| Metric | Value |", body)
 
 
 if __name__ == "__main__":

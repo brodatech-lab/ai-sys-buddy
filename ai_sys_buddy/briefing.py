@@ -166,10 +166,44 @@ def render_snapshot(data: dict[str, object]) -> str:
 
 
 STATUS_INSTRUCTION = (
-    "Here is a live snapshot of the user's machine. Write a short, friendly "
-    "system status briefing in Markdown (5 to 8 bullets): overall health, "
-    "anything that looks off (disk, memory, load, uptime) and one or two safe "
-    "next steps. Read-only: never claim to run commands, and put any command "
-    "in a code block for the user to run manually. Do not greet the user; just "
-    "give the status."
+    "You are given a system snapshot. Reply with at most 2 short sentences "
+    "total: first a one-line health verdict, then (only if something looks off) "
+    "the single most important concern and one safe next step. Never repeat the "
+    "numbers from the snapshot. Read-only: never claim to run commands, and put "
+    "any command in a code block for the user to run manually."
 )
+
+
+def render_markdown(data: dict[str, object]) -> str:
+    """Render the snapshot as a compact Markdown table for display."""
+    hardware = data.get("hardware", {}) or {}
+    memory = data.get("memory", {}) or {}
+    rows: list[tuple[str, str]] = [
+        ("OS", str(hardware.get("os", "?"))),
+        ("CPU", f"{hardware.get('cpu', '?')} \u00b7 {hardware.get('cores', '?')} cores"),
+        ("GPU", str(hardware.get("gpu", "?"))),
+        ("Uptime", str(data.get("uptime", "?"))),
+    ]
+    load = data.get("load_average")
+    if load:
+        rows.append(("Load (1/5/15)", " / ".join(f"{value:.2f}" for value in load)))
+    if memory.get("ram_total_gb") is not None:
+        value = f"{memory.get('ram_used_percent', '?')}% used"
+        if memory.get("ram_available_gb") is not None:
+            value += f" \u00b7 {memory['ram_available_gb']} GiB free of {memory['ram_total_gb']} GiB"
+        rows.append(("RAM", value))
+    if memory.get("swap_total_gb") is not None:
+        rows.append(
+            ("Swap", f"{memory.get('swap_used_percent', '?')}% used of {memory['swap_total_gb']} GiB")
+        )
+    for disk in data.get("disks", []):
+        rows.append(
+            (
+                f"Disk `{disk['path']}`",
+                f"{disk['used_percent']}% used \u00b7 {disk['free_gb']} GiB free of {disk['total_gb']} GiB",
+            )
+        )
+    lines = ["| Metric | Value |", "| --- | --- |"]
+    lines += [f"| **{name}** | {value} |" for name, value in rows]
+    return "\n".join(lines)
+
