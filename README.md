@@ -25,6 +25,8 @@ for your models.
 - **Interactive chat** — just run `ai` and press Enter; a small REPL with
   short-term conversation memory.
 - **Metrics** — `-v` shows load time, eval tokens and tokens/second.
+- **System status** — `ai status` gives a friendly briefing built from a live
+  snapshot (CPU, RAM, disk, uptime, load, GPU).
 - **Telemetry & benchmark** — `ai perf` compares models; an optional local
   hardware + performance panel is shown when enabled.
 - **Settings menu** — pick the model, URL, persona, theme and backend with arrows.
@@ -129,11 +131,13 @@ ai
 ```
 
 Then type your questions. Inside the prompt you can use `?cmd` for command
-lookups, `perf` to benchmark, `s` for settings, and `exit` to quit.
+lookups, `status` for a briefing, `perf` to benchmark, `s` for settings, and
+`exit` to quit.
 
 ### Settings, benchmark and help
 
 ```bash
+ai status       # system status briefing from a live snapshot
 ai s            # settings menu (alias: ai settings)
 ai perf         # benchmark the current model
 ai perf all     # benchmark every installed model

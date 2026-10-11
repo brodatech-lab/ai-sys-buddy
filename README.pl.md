@@ -24,6 +24,8 @@ uczy komend i pokazuje metryki wydajności modeli.
 - **Interaktywny czat** — wpisz po prostu `ai` i naciśnij Enter; mały REPL z
   krótkoterminową pamięcią rozmowy.
 - **Metryki** — flaga `-v` pokazuje czas ładowania, tokeny i tokeny/sekundę.
+- **Status systemu** — `ai status` daje przyjazny briefing na podstawie
+  bieżącego snapshotu (CPU, RAM, dysk, uptime, load, GPU).
 - **Telemetria i benchmark** — `ai perf` porównuje modele; opcjonalny lokalny
   panel sprzęt + wydajność pokazuje się, gdy go włączysz.
 - **Menu ustawień** — wybór modelu, URL, osobowości, motywu i backendu strzałkami.
@@ -128,11 +130,13 @@ ai
 ```
 
 Potem wpisuj pytania. W trybie interaktywnym możesz użyć `?komenda` do haseł
-encyklopedii, `perf` do benchmarku, `s` do ustawień i `exit`, aby wyjść.
+encyklopedii, `status` do briefingu, `perf` do benchmarku, `s` do ustawień i
+`exit`, aby wyjść.
 
 ### Ustawienia, benchmark i pomoc
 
 ```bash
+ai status       # briefing o stanie systemu z bieżącego snapshotu
 ai s            # menu ustawień (alias: ai settings)
 ai perf         # benchmark bieżącego modelu
 ai perf all     # benchmark wszystkich zainstalowanych modeli

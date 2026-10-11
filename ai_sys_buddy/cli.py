@@ -9,6 +9,7 @@ from pathlib import Path
 from . import __version__
 from .config import Config, UI_BACKENDS, config_path, load_config, save_config
 from . import ollama, profiler, prompt, telemetry
+from . import briefing
 from .osenv import get_context
 from .settings import run_settings, switch_model
 from .ui import UI, get_ui
@@ -19,9 +20,10 @@ _HELP = """\
 {prog} - your terminal sysadmin buddy (read-only, private)
 
 Usage:
-  {prog}                       interactive mode
+  {prog}                       interactive chat mode
   {prog} <question>            ask a diagnostic question
   {prog} ?<command>            encyclopedia entry for a command (e.g. ?chmod)
+  {prog} status                system status briefing
   {prog} perf [all]            benchmark the model (or all installed models)
   {prog} s | settings          open the settings menu
   {prog} help                  show this help
@@ -37,6 +39,9 @@ Options:
       --no-color   disable colors
       --config P   use an alternative config file
       --version    show version and exit
+
+In interactive mode you can also use: status, perf, s (settings), ?<command>,
+help and exit.
 
 Pipes and sudo (Linux):
   sudo journalctl -u pveproxy -n 50 | {prog} "what is going on?"
@@ -277,6 +282,32 @@ def run_perf(config: Config, ui: UI, all_models: bool = False) -> None:
     ui.render_markdown(header + "\n".join(rows), title="ai perf")
 
 
+def run_status(config: Config, ui: UI, verbose: bool = False) -> None:
+    """Show a friendly system status briefing (``ai status``)."""
+    data = briefing.gather_briefing()
+    snapshot = briefing.render_snapshot(data)
+    if not config.model:
+        # No model selected yet: show the raw snapshot instead.
+        ui.render_markdown(f"```\n{snapshot}\n```", title="status")
+        return
+    context = get_context()
+    system_prompt = prompt.build_system_prompt(context, config.persona_name)
+    user_content = f"{briefing.STATUS_INSTRUCTION}\n\n{snapshot}"
+    messages = prompt.build_messages(system_prompt, [], user_content)
+    try:
+        with ui.status("Checking system status...") as status:
+            reply, metrics = collect_reply(config, ui, messages, status=status)
+    except ollama.OllamaError as exc:
+        ui.error(str(exc))
+        ui.render_markdown(f"```\n{snapshot}\n```", title="status")
+        return
+    ui.render_markdown(reply.strip(), title="status")
+    if config.telemetry_enabled:
+        show_telemetry(config, ui, metrics)
+    elif verbose:
+        ui.print(profiler.format_metrics(metrics), "dim")
+
+
 def interactive_loop(config: Config, ui: UI, verbose: bool,
                      config_file: Path | None = None) -> None:
     context = get_context()
@@ -305,6 +336,9 @@ def interactive_loop(config: Config, ui: UI, verbose: bool,
             continue
         if lowered in ("perf", "perf all", "bench"):
             run_perf(config, ui, all_models=(lowered != "perf"))
+            continue
+        if lowered == "status":
+            run_status(config, ui, verbose)
             continue
         if line.startswith("?"):
             run_encyclopedia(config, ui, line[1:], verbose)
@@ -353,6 +387,11 @@ def run(argv: list[str] | None = None) -> int:
     if tokens and tokens[0].lower() in ("perf", "bench"):
         all_models = any(part.lower() in ("all", "--all") for part in tokens[1:])
         run_perf(config, ui, all_models=all_models)
+        return 0
+
+    if len(tokens) == 1 and tokens[0].lower() == "status":
+        ensure_model(config, ui, config_file)
+        run_status(config, ui, verbose)
         return 0
 
     piped = read_piped_stdin()
