@@ -15,8 +15,6 @@ uczy komend i pokazuje metryki wydajności modeli.
 > przeglądasz i uruchamiasz ręcznie. Nic nie jest wysyłane poza Twój serwer
 > Ollama.
 
-![ai-sys-buddy odpowiada na pytanie diagnostyczne](docs/buddy_prompt.png)
-
 ## Użycie
 
 ### Zadaj pytanie
