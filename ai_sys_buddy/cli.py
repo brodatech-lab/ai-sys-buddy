@@ -310,6 +310,50 @@ def run_status(config: Config, ui: UI, verbose: bool = False) -> None:
         ui.print(profiler.format_metrics(metrics), "dim")
 
 
+def run_perf(config: Config, ui: UI, all_models: bool = False) -> None:
+    """Benchmark the selected model (or every installed model) with a fixed prompt."""
+    if all_models:
+        try:
+            models = ollama.list_models(config.ollama_url)
+        except ollama.OllamaError as exc:
+            ui.error(str(exc))
+            return
+        if not models:
+            ui.warning("No models installed. Try: ollama pull llama3.2")
+            return
+    else:
+        if not config.model:
+            ui.warning("No model selected. Use 'ai s' first.")
+            return
+        models = [config.model]
+
+    context = get_context()
+    system_prompt = prompt.build_system_prompt(context, config.persona_name)
+    messages = prompt.build_messages(system_prompt, [], "Reply with exactly: ok")
+
+    rows: list[str] = ["| Model | Load (s) | Eval tok | Speed (tok/s) |", "| --- | --- | --- | --- |"]
+    for model in models:
+        try:
+            with ui.status(f"Benchmarking {model}...") as status:
+                _, metrics = collect_reply(config, ui, messages, status=status)
+            record = telemetry.build_record(model, metrics)
+            load = record.get("load_duration_s")
+            speed = record.get("tokens_per_second")
+            rows.append(
+                f"| `{model}` | {load if load is not None else '?'} "
+                f"| {record.get('eval_count', '?')} | {speed if speed is not None else '?'} |"
+            )
+        except ollama.OllamaError as exc:
+            rows.append(f"| `{model}` | error | - | {str(exc)[:40]} |")
+
+    hardware = telemetry.gather_hardware()
+    header = (
+        f"**{hardware.get('cpu', '?')}** - {hardware.get('cores', '?')} cores, "
+        f"{hardware.get('ram_gb', '?')} GiB RAM\n"
+    )
+    ui.render_markdown(header + "\n".join(rows), title="ai perf")
+
+
 def interactive_loop(config: Config, ui: UI, verbose: bool,
                      config_file: Path | None = None) -> None:
     context = get_context()
