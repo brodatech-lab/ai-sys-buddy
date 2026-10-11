@@ -11,6 +11,19 @@ sections below as the GitHub release notes.
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-11
+
+### What's New
+- `ai status`: a friendly system status briefing. It shows a compact live data
+  table (OS, CPU, GPU, uptime, load, RAM, swap, disk) and a short verdict from
+  the model. Also available inside interactive mode.
+- README reworked: usage moved above features and illustrated with screenshots
+  (see `docs/`).
+
+### Changed
+- The project description makes clear it is purpose-built for older hardware
+  and small, fast AI models.
+
 ## [0.1.3] - 2026-10-10
 
 ### What's New
@@ -100,7 +113,8 @@ sections below as the GitHub release notes.
 ### Changed
 - Nothing yet.
 
-[Unreleased]: https://github.com/brodatech-lab/ai-sys-buddy/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/brodatech-lab/ai-sys-buddy/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.4
 [0.1.3]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.3
 [0.1.2]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.2
 [0.1.1]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.1

@@ -9,7 +9,7 @@ __all__ = ["__version__", "APP_NAME", "DEFAULT_PERSONA"]
 
 # Single source of truth for the version. It must match the git tag and the
 # matching entry in CHANGELOG.md.
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 APP_NAME = "ai-sys-buddy"
 

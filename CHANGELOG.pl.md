@@ -11,6 +11,19 @@ workflow wydania, który publikuje opis z sekcji "What's New", "Fixed" i
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-11
+
+### What's New
+- `ai status`: przyjazny briefing o stanie systemu. Pokazuje zwięzłą, bieżącą
+  tabelę danych (OS, CPU, GPU, uptime, load, RAM, swap, dysk) oraz krótki
+  werdykt od modelu. Dostępny też w trybie interaktywnym.
+- README przebudowane: użycie przeniesione nad funkcje i zilustrowane zrzutami
+  ekranu (katalog `docs/`).
+
+### Changed
+- Opis projektu jasno mówi, że jest stworzony pod starszy sprzęt i małe, szybkie
+  modele AI.
+
 ## [0.1.3] - 2026-10-10
 
 ### What's New
@@ -102,7 +115,8 @@ workflow wydania, który publikuje opis z sekcji "What's New", "Fixed" i
 ### Changed
 - Na razie brak.
 
-[Unreleased]: https://github.com/brodatech-lab/ai-sys-buddy/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/brodatech-lab/ai-sys-buddy/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.4
 [0.1.3]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.3
 [0.1.2]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.2
 [0.1.1]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.1

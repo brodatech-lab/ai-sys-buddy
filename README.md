@@ -16,6 +16,68 @@ for your models.
 > model only produces text and formats commands in frames; you review and run
 > them yourself. Nothing is ever sent anywhere except your own Ollama server.
 
+![ai-sys-buddy answering a diagnostic question](docs/buddy_prompt.png)
+
+## Usage
+
+### Ask a question
+
+```bash
+ai how do I check disk usage on Linux?
+ai why is my service not starting?
+```
+
+![ai-sys-buddy answering a diagnostic question](docs/buddy_prompt.png)
+
+### Look up a command
+
+```bash
+ai ?chmod
+ai ?systemctl
+```
+
+![ai-sys-buddy command encyclopedia](docs/buddy_command.png)
+
+### Analyse piped output (Linux)
+
+```bash
+sudo journalctl -u pveproxy -n 50 | ai what is going on?
+cat error.log | ai why does this fail?
+```
+
+![ai-sys-buddy analysing piped output](docs/buddy_pipe.png)
+
+### System status
+
+```bash
+ai status
+```
+
+![ai-sys-buddy system status table](docs/buddy_status.png)
+
+### Settings, benchmark and help
+
+```bash
+ai s            # settings menu (alias: ai settings)
+ai perf         # benchmark the current model
+ai perf all     # benchmark every installed model
+ai help         # help
+```
+
+![ai-sys-buddy settings menu](docs/buddy_settings.png)
+
+### Interactive mode
+
+Type `ai` and press Enter to enter chat mode:
+
+```bash
+ai
+```
+
+Then type your questions. Inside the prompt you can use `?cmd` for command
+lookups, `status` for a briefing, `perf` to benchmark, `s` for settings, and
+`exit` to quit.
+
 ## Features
 
 - **OS aware** — detects Linux and Windows and adapts its guidance.
@@ -24,9 +86,9 @@ for your models.
 - **Pipes & sudo** — `sudo journalctl -n 50 | ai what is going on?`
 - **Interactive chat** — just run `ai` and press Enter; a small REPL with
   short-term conversation memory.
-- **Metrics** — `-v` shows load time, eval tokens and tokens/second.
 - **System status** — `ai status` gives a friendly briefing built from a live
   snapshot (CPU, RAM, disk, uptime, load, GPU).
+- **Metrics** — `-v` shows load time, eval tokens and tokens/second.
 - **Telemetry & benchmark** — `ai perf` compares models; an optional local
   hardware + performance panel is shown when enabled.
 - **Settings menu** — pick the model, URL, persona, theme and backend with arrows.
@@ -99,52 +161,10 @@ To remove it again:
 powershell -ExecutionPolicy Bypass -File .\install.ps1 -Uninstall
 ```
 
-## Usage
+## Options
 
-### Ask a question
-
-```bash
-ai how do I check disk usage on Linux?
-ai why is my service not starting?
-```
-
-### Look up a command
-
-```bash
-ai ?chmod
-ai ?systemctl
-```
-
-### Analyse piped output (Linux)
-
-```bash
-sudo journalctl -u pveproxy -n 50 | ai what is going on?
-cat error.log | ai why does this fail?
-```
-
-### Interactive mode
-
-Type `ai` and press Enter to enter chat mode:
-
-```bash
-ai
-```
-
-Then type your questions. Inside the prompt you can use `?cmd` for command
-lookups, `status` for a briefing, `perf` to benchmark, `s` for settings, and
-`exit` to quit.
-
-### Settings, benchmark and help
-
-```bash
-ai status       # system status briefing from a live snapshot
-ai s            # settings menu (alias: ai settings)
-ai perf         # benchmark the current model
-ai perf all     # benchmark every installed model
-ai help         # help
-```
-
-### Options
+These options apply to the `ai` command and to the compiled `ai-sys-buddy`
+(Linux) / `ai-sys-buddy.exe` (Windows) binary.
 
 | Option | Description |
 | --- | --- |
