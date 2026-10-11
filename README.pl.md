@@ -2,7 +2,7 @@
 
 [English](README.md) | **Polski**
 
-Lekki, prywatny asystent terminalowy z przyjazną osobowością **kumpla-sysadmina**.
+Lekki, prywatny asystent terminalowy z przyjazną osobowością
 Stworzony z myślą o starszym sprzęcie i małych, szybkich modelach AI, łączy się z
 lokalną lub zdalną instancją [Ollamy](https://ollama.com), pomaga w diagnostyce,
 uczy komend i pokazuje metryki wydajności modeli.
