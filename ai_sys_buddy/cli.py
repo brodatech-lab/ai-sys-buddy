@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 from pathlib import Path
 
 from . import __version__
 from .config import Config, UI_BACKENDS, config_path, load_config, save_config
-from . import ollama, profiler, prompt
+from . import ollama, profiler, prompt, telemetry
 from .osenv import get_context
 from .settings import run_settings, switch_model
 from .ui import UI, get_ui
@@ -23,12 +22,15 @@ Usage:
   {prog}                       interactive mode
   {prog} <question>            ask a diagnostic question
   {prog} ?<command>            encyclopedia entry for a command (e.g. ?chmod)
+  {prog} perf [all]            benchmark the model (or all installed models)
   {prog} s | settings          open the settings menu
   {prog} help                  show this help
 
 Options:
   -v, --verbose    show model performance metrics
       --think      enable model reasoning (thinking models only)
+      --no-markdown  print plain text instead of rendered Markdown
+      --theme NAME syntax highlighting theme (rich backend)
       --model NAME override the model for this run
       --url URL    override the Ollama URL for this run
       --backend B  UI backend: rich | standard
@@ -49,6 +51,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("-h", "--help", action="store_true")
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("--think", action="store_true", help="enable model reasoning")
+    parser.add_argument("--no-markdown", action="store_true", help="print plain text, no markdown")
+    parser.add_argument("--theme", help="syntax highlighting theme (rich backend)")
     parser.add_argument("--no-color", action="store_true")
     parser.add_argument("--model")
     parser.add_argument("--url")
@@ -60,20 +64,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def read_piped_stdin() -> str:
-    """Return piped stdin content, or an empty string when interactive.
+    """Read piped stdin fully, or return "" when stdin is a terminal.
 
-    Uses a non-blocking readiness check on POSIX so an open-but-empty stdin
-    never makes the process hang waiting for input that will not arrive.
+    We read to EOF (blocking) so real pipelines such as
+    ``sudo journalctl -n 50 | ai "what is going on?"`` include the full upstream
+    output. Even when sudo first waits for a password, the pipe stays open until
+    the producer finishes, so blocking here is correct; a non-blocking peek
+    would wrongly return before the data arrives.
     """
     if sys.stdin.isatty():
         return ""
     try:
-        if os.name == "posix":
-            import select
-
-            ready, _, _ = select.select([sys.stdin], [], [], 0.0)
-            if not ready:
-                return ""
         return sys.stdin.read()
     except (OSError, ValueError):
         return ""
@@ -152,31 +153,62 @@ def stream_reply(config: Config, ui: UI, messages: list[dict]) -> tuple[str, dic
     return "".join(parts), metrics
 
 
-def collect_reply(config: Config, ui: UI, messages: list[dict]) -> tuple[str, dict | None]:
-    """Collect the reply without printing (used for framed output)."""
+def collect_reply(config: Config, ui: UI, messages: list[dict],
+                  status=None) -> tuple[str, dict | None]:
+    """Collect the reply while updating an optional status message.
+
+    Used for framed Markdown output. ``status`` is the handle yielded by
+    ``ui.status(...)``; when present it is updated from "Thinking..." to
+    "Answering..." as the stream progresses.
+    """
     parts: list[str] = []
     metrics: dict | None = None
+    thinking_seen = False
+    content_seen = False
     for event in ollama.stream_chat(
         config.ollama_url, config.model, messages, think=config.think
     ):
+        if status is not None:
+            if event.thinking and not thinking_seen:
+                status.update("Thinking...")
+                thinking_seen = True
+            elif event.text and not content_seen:
+                status.update("Answering...")
+                content_seen = True
         parts.append(event.text)
         if event.done:
             metrics = event.metrics
     return "".join(parts), metrics
 
 
+def show_telemetry(config: Config, ui: UI, metrics: dict | None) -> None:
+    """Display the local hardware + performance telemetry in a panel."""
+    hardware = telemetry.gather_hardware()
+    report = telemetry.render_report(config.model, hardware, metrics)
+    ui.render_markdown(report, title="telemetry")
+
+
 def run_query(config: Config, ui: UI, history: prompt.History, question: str,
               verbose: bool, piped: str = "") -> None:
+    if piped.strip():
+        ui.info(f"Including {len(piped.splitlines())} line(s) from stdin")
     user_content = prompt.wrap_stdin(question, piped) if piped else question
     messages = _messages(config, history, user_content)
     try:
-        reply, metrics = stream_reply(config, ui, messages)
+        if config.markdown:
+            with ui.status("Consulting the model...") as status:
+                reply, metrics = collect_reply(config, ui, messages, status=status)
+            ui.render_markdown(reply.strip(), title=config.persona_name or "ai")
+        else:
+            reply, metrics = stream_reply(config, ui, messages)
     except ollama.OllamaError as exc:
         ui.error(str(exc))
         return
     history.add("user", user_content)
     history.add("assistant", reply)
-    if verbose:
+    if config.telemetry_enabled:
+        show_telemetry(config, ui, metrics)
+    elif verbose:
         ui.print(profiler.format_metrics(metrics), "dim")
 
 
@@ -188,15 +220,61 @@ def run_encyclopedia(config: Config, ui: UI, command: str, verbose: bool) -> Non
     system_prompt = prompt.build_system_prompt(context, config.persona_name)
     user_content = f"{prompt.ENCYCLOPEDIA_INSTRUCTION}\n\nCommand: {command.strip()}"
     messages = prompt.build_messages(system_prompt, [], user_content)
-    ui.info(f"Looking up: {command.strip()}")
     try:
-        reply, metrics = collect_reply(config, ui, messages)
+        with ui.status(f"Looking up {command.strip()}...") as status:
+            reply, metrics = collect_reply(config, ui, messages, status=status)
     except ollama.OllamaError as exc:
         ui.error(str(exc))
         return
-    ui.frame(f"?{command.strip()}", reply.strip())
-    if verbose:
+    ui.render_markdown(reply.strip(), title=f"?{command.strip()}")
+    if config.telemetry_enabled:
+        show_telemetry(config, ui, metrics)
+    elif verbose:
         ui.print(profiler.format_metrics(metrics), "dim")
+
+
+def run_perf(config: Config, ui: UI, all_models: bool = False) -> None:
+    """Benchmark the selected model (or every installed model) with a fixed prompt."""
+    if all_models:
+        try:
+            models = ollama.list_models(config.ollama_url)
+        except ollama.OllamaError as exc:
+            ui.error(str(exc))
+            return
+        if not models:
+            ui.warning("No models installed. Try: ollama pull llama3.2")
+            return
+    else:
+        if not config.model:
+            ui.warning("No model selected. Use 'ai s' first.")
+            return
+        models = [config.model]
+
+    context = get_context()
+    system_prompt = prompt.build_system_prompt(context, config.persona_name)
+    messages = prompt.build_messages(system_prompt, [], "Reply with exactly: ok")
+
+    rows: list[str] = ["| Model | Load (s) | Eval tok | Speed (tok/s) |", "| --- | --- | --- | --- |"]
+    for model in models:
+        try:
+            with ui.status(f"Benchmarking {model}...") as status:
+                _, metrics = collect_reply(config, ui, messages, status=status)
+            record = telemetry.build_record(model, metrics)
+            load = record.get("load_duration_s")
+            speed = record.get("tokens_per_second")
+            rows.append(
+                f"| `{model}` | {load if load is not None else '?'} "
+                f"| {record.get('eval_count', '?')} | {speed if speed is not None else '?'} |"
+            )
+        except ollama.OllamaError as exc:
+            rows.append(f"| `{model}` | error | - | {str(exc)[:40]} |")
+
+    hardware = telemetry.gather_hardware()
+    header = (
+        f"**{hardware.get('cpu', '?')}** - {hardware.get('cores', '?')} cores, "
+        f"{hardware.get('ram_gb', '?')} GiB RAM\n"
+    )
+    ui.render_markdown(header + "\n".join(rows), title="ai perf")
 
 
 def interactive_loop(config: Config, ui: UI, verbose: bool,
@@ -225,6 +303,9 @@ def interactive_loop(config: Config, ui: UI, verbose: bool,
         if lowered in ("s", "settings", "config"):
             run_settings(config, ui, config_file)
             continue
+        if lowered in ("perf", "perf all", "bench"):
+            run_perf(config, ui, all_models=(lowered != "perf"))
+            continue
         if line.startswith("?"):
             run_encyclopedia(config, ui, line[1:], verbose)
             continue
@@ -251,6 +332,10 @@ def run(argv: list[str] | None = None) -> int:
         config.no_color = True
     if args.think:
         config.think = True
+    if args.no_markdown:
+        config.markdown = False
+    if args.theme:
+        config.code_theme = args.theme
 
     ui = get_ui(config)
     verbose = args.verbose or config.verbose_default
@@ -263,6 +348,11 @@ def run(argv: list[str] | None = None) -> int:
     # Settings must not consume a pipe; handle it before reading stdin.
     if tokens and tokens[0].lower() in ("s", "settings", "config"):
         run_settings(config, ui, config_file)
+        return 0
+
+    if tokens and tokens[0].lower() in ("perf", "bench"):
+        all_models = any(part.lower() in ("all", "--all") for part in tokens[1:])
+        run_perf(config, ui, all_models=all_models)
         return 0
 
     piped = read_piped_stdin()

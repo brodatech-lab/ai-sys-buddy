@@ -68,6 +68,9 @@ class FakeUI(UI):
     def stream_end(self):
         pass
 
+    def pause(self, message="Press Enter to continue"):
+        self.messages.append(("pause", message))
+
     def kinds(self):
         return [kind for kind, _ in self.messages]
 
@@ -100,6 +103,44 @@ class SettingsTests(unittest.TestCase):
             settings.run_settings(cfg, ui, path=path)
             self.assertTrue(cfg.think)
             self.assertTrue(config_mod.load_config(path).think)
+
+    def test_toggle_markdown_then_save(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.json"
+            cfg = config_mod.Config(markdown=True)
+            ui = FakeUI(selections=["Markdown", "Save and exit"])
+            settings.run_settings(cfg, ui, path=path)
+            self.assertFalse(cfg.markdown)
+            self.assertFalse(config_mod.load_config(path).markdown)
+
+    def test_choose_code_theme_then_save(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.json"
+            cfg = config_mod.Config()
+            ui = FakeUI(selections=["Code theme", "dracula", "Save and exit"])
+            settings.run_settings(cfg, ui, path=path)
+            self.assertEqual(cfg.code_theme, "dracula")
+            self.assertEqual(config_mod.load_config(path).code_theme, "dracula")
+
+    def test_connection_test_ok_then_pause(self) -> None:
+        from unittest import mock
+
+        cfg = config_mod.Config()
+        ui = FakeUI(selections=["Test Ollama", "Exit without saving"])
+        with mock.patch.object(settings.ollama, "ping", return_value=True):
+            settings.run_settings(cfg, ui, path=Path("/tmp/does-not-matter.json"))
+        kinds = ui.kinds()
+        self.assertIn("success", kinds)
+        self.assertIn("pause", kinds)
+
+    def test_connection_test_failed(self) -> None:
+        from unittest import mock
+
+        cfg = config_mod.Config()
+        ui = FakeUI(selections=["Test Ollama", "Exit without saving"])
+        with mock.patch.object(settings.ollama, "ping", return_value=False):
+            settings.run_settings(cfg, ui, path=Path("/tmp/does-not-matter.json"))
+        self.assertIn("error", ui.kinds())
 
     def test_cancel_does_not_save(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

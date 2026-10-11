@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Callable
 
 from . import ollama
-from .config import Config, UI_BACKENDS, config_path, save_config
+from .config import CODE_THEMES, Config, UI_BACKENDS, config_path, save_config
 from .ui import UI
 
 
@@ -21,6 +21,7 @@ class _Item:
     key: str
     label: str
     handler: Callable[[], None] | None = None
+    pause: bool = False
 
 
 def _status_body(config: Config, path: Path | None = None) -> str:
@@ -32,6 +33,8 @@ def _status_body(config: Config, path: Path | None = None) -> str:
         f"History size    : {config.history_size}",
         f"Verbose default : {config.verbose_default}",
         f"Reasoning(think): {config.think}",
+        f"Markdown        : {config.markdown}",
+        f"Code theme      : {config.code_theme}",
         f"Telemetry       : {config.telemetry_enabled}",
         f"No color        : {config.no_color}",
         f"Config file     : {path or config_path()}",
@@ -78,6 +81,16 @@ def _toggle_think(config: Config, ui: UI) -> None:
         ui.warning("Reasoning enabled. Models without thinking support will error.")
 
 
+def _toggle_markdown(config: Config, ui: UI) -> None:
+    config.markdown = not config.markdown
+
+
+def _choose_theme(config: Config, ui: UI) -> None:
+    picked = ui.select("Code theme", list(CODE_THEMES))
+    if picked:
+        config.code_theme = picked
+
+
 def _toggle_color(config: Config, ui: UI) -> None:
     config.no_color = not config.no_color
 
@@ -85,7 +98,7 @@ def _toggle_color(config: Config, ui: UI) -> None:
 def _toggle_telemetry(config: Config, ui: UI) -> None:
     config.telemetry_enabled = not config.telemetry_enabled
     if config.telemetry_enabled:
-        ui.warning("Opt-in hardware telemetry is reserved and not active yet.")
+        ui.info("Telemetry panel will now be shown after each answer (local only).")
 
 
 def _pick_model(config: Config, ui: UI) -> None:
@@ -149,9 +162,9 @@ def _manage_loaded(config: Config, ui: UI) -> None:
 
 def _test_connection(config: Config, ui: UI) -> None:
     if ollama.ping(config.ollama_url):
-        ui.success(f"Ollama is reachable at {config.ollama_url}.")
+        ui.success(f"Connection test OK: Ollama reachable at {config.ollama_url}.")
     else:
-        ui.error(f"Cannot reach Ollama at {config.ollama_url}.")
+        ui.error(f"Connection test FAILED: cannot reach Ollama at {config.ollama_url}.")
 
 
 def run_settings(config: Config, ui: UI, path: Path | None = None) -> bool:
@@ -162,25 +175,29 @@ def run_settings(config: Config, ui: UI, path: Path | None = None) -> bool:
 
         items = [
             _Item("url", f"Ollama URL       : {config.ollama_url}",
-                  lambda: _edit_url(config, ui)),
+                  lambda: _edit_url(config, ui), pause=True),
+            _Item("test", "Test Ollama connection", lambda: _test_connection(config, ui), pause=True),
             _Item("model", f"Model            : {config.model or '(not set)'}",
-                  lambda: _pick_model(config, ui)),
+                  lambda: _pick_model(config, ui), pause=True),
+            _Item("loaded", "Manage loaded models", lambda: _manage_loaded(config, ui), pause=True),
             _Item("persona", f"Persona name     : {config.persona_name}",
                   lambda: _edit_persona(config, ui)),
             _Item("backend", f"UI backend       : {config.ui_backend}",
                   lambda: _edit_backend(config, ui)),
+            _Item("theme", f"Code theme       : {config.code_theme}",
+                  lambda: _choose_theme(config, ui)),
             _Item("history", f"History size     : {config.history_size}",
-                  lambda: _edit_history(config, ui)),
+                  lambda: _edit_history(config, ui), pause=True),
             _Item("verbose", f"Verbose default  : {config.verbose_default}",
                   lambda: _toggle_verbose(config, ui)),
             _Item("think", f"Reasoning (think): {config.think}",
                   lambda: _toggle_think(config, ui)),
+            _Item("markdown", f"Markdown render  : {config.markdown}",
+                  lambda: _toggle_markdown(config, ui)),
             _Item("telemetry", f"Telemetry (opt-in): {config.telemetry_enabled}",
                   lambda: _toggle_telemetry(config, ui)),
             _Item("color", f"No color         : {config.no_color}",
                   lambda: _toggle_color(config, ui)),
-            _Item("loaded", "Manage loaded models", lambda: _manage_loaded(config, ui)),
-            _Item("test", "Test Ollama connection", lambda: _test_connection(config, ui)),
             _Item("save", "Save and exit"),
             _Item("cancel", "Exit without saving"),
         ]
@@ -205,3 +222,6 @@ def run_settings(config: Config, ui: UI, path: Path | None = None) -> bool:
             return True
         if selected.handler is not None:
             selected.handler()
+            # Give the user a moment to read any result before the panel redraws.
+            if selected.pause:
+                ui.pause()

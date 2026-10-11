@@ -8,6 +8,9 @@ from typing import Iterable, Sequence
 
 from .osenv import EnvContext
 
+# Upper bound on how much piped input we embed into the prompt.
+MAX_STDIN_CHARS = 40000
+
 _SAFETY_RULES = """\
 Hard rules you must always follow:
 - You are read-only. Never claim you ran, can run, or will run any command.
@@ -79,8 +82,14 @@ def build_messages(
 
 
 def wrap_stdin(question: str, stdin_text: str) -> str:
-    """Embed piped stdin content into the user turn as context."""
+    """Embed piped stdin content into the user turn as context.
+
+    Very large inputs are truncated from the front so the most recent lines
+    (typically the interesting ones, e.g. the tail of a log) are kept.
+    """
     stripped = stdin_text.strip()
     if not stripped:
         return question
+    if len(stripped) > MAX_STDIN_CHARS:
+        stripped = "...(earlier output truncated)...\n" + stripped[-MAX_STDIN_CHARS:]
     return f"{question}\n\nHere is the piped input to analyse:\n```\n{stripped}\n```"

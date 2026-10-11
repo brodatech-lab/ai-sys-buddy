@@ -8,17 +8,13 @@
     adds the folder to the user PATH and writes an initial config with your
     Ollama URL and model.
 
-    The repository is private, so pass a GitHub token with -Token (or set the
-    GITHUB_TOKEN environment variable) to download the release. Alternatively,
-    place ai-sys-buddy.exe next to this script and run it without a token.
+.EXAMPLE
+    # One-liner:
+    irm https://raw.githubusercontent.com/brodatech-lab/ai-sys-buddy/main/install.ps1 | iex
 
 .EXAMPLE
     # From a downloaded file next to ai-sys-buddy.exe:
     powershell -ExecutionPolicy Bypass -File .\install.ps1
-
-.EXAMPLE
-    # One-liner (repo private -> needs a token):
-    $env:GITHUB_TOKEN="ghp_xxx"; irm -Headers @{Authorization="token $env:GITHUB_TOKEN"} https://raw.githubusercontent.com/brodatech-lab/ai-sys-buddy/main/install.ps1 | iex
 
 .EXAMPLE
     # Uninstall:
@@ -100,25 +96,24 @@ if (-not [string]::IsNullOrEmpty($Source)) {
     Copy-Item -Force $localExe $ExePath
     Write-Ok "Using local $AssetName"
 } else {
-    if ([string]::IsNullOrEmpty($Token)) {
-        $secure = Read-Host "GitHub token (needed because the repo is private)" -AsSecureString
-        $Token = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
-            [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure))
+    $headers = @{ "User-Agent" = "ai-sys-buddy-installer" }
+    if (-not [string]::IsNullOrEmpty($Token)) {
+        $headers["Authorization"] = "token $Token"
     }
-    if ([string]::IsNullOrEmpty($Token)) {
-        throw "No token and no local $AssetName found. Download the release asset and place it next to this script, or pass -Token."
-    }
-    $headers = @{ Authorization = "token $Token"; "User-Agent" = "ai-sys-buddy-installer" }
     Write-Step "Fetching latest release info"
-    $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -Headers $headers
+    try {
+        $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -Headers $headers
+    } catch {
+        throw "Could not fetch the latest release from GitHub. Check your connection, or download $AssetName manually and place it next to this script."
+    }
     $asset = $release.assets | Where-Object { $_.name -eq $AssetName } | Select-Object -First 1
     if (-not $asset) { throw "Release $($release.tag_name) has no $AssetName asset." }
     Write-Step "Downloading $AssetName from $($release.tag_name)"
-    Invoke-WebRequest -Uri $asset.url -Headers @{
-        Authorization = "token $Token"
-        Accept        = "application/octet-stream"
-        "User-Agent"  = "ai-sys-buddy-installer"
-    } -OutFile $ExePath
+    $downloadHeaders = @{ Accept = "application/octet-stream"; "User-Agent" = "ai-sys-buddy-installer" }
+    if (-not [string]::IsNullOrEmpty($Token)) {
+        $downloadHeaders["Authorization"] = "token $Token"
+    }
+    Invoke-WebRequest -Uri $asset.url -Headers $downloadHeaders -OutFile $ExePath
     Write-Ok "Downloaded $AssetName"
 }
 

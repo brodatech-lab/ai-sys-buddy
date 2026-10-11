@@ -8,7 +8,15 @@ backend agnostic.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Sequence
+from contextlib import contextmanager
+from typing import Iterator, Sequence
+
+
+class Status:
+    """Handle for updating a transient status message while work runs."""
+
+    def update(self, message: str) -> None:
+        return None
 
 
 class UI(ABC):
@@ -20,6 +28,27 @@ class UI(ABC):
     def clear(self) -> None:
         """Clear the screen. A no-op by default (e.g. when output is piped)."""
         return None
+
+    @contextmanager
+    def status(self, message: str) -> Iterator[Status]:
+        """Show a transient status. Default prints the message once."""
+        self.print(message, "dim")
+        yield Status()
+
+    def render_markdown(self, text: str, title: str | None = None) -> None:
+        """Render text as Markdown. Default fallback is plain text."""
+        if title:
+            self.frame(title, text)
+        else:
+            self.print(text)
+
+    def pause(self, message: str = "Press Enter to continue") -> None:
+        """Wait for the user to acknowledge a message (before a redraw)."""
+        self.print(message, "dim")
+        try:
+            input()
+        except (EOFError, KeyboardInterrupt):
+            print()
 
     # --- Plain output -------------------------------------------------
     @abstractmethod

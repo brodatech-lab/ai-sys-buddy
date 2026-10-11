@@ -46,6 +46,17 @@ class PromptTests(unittest.TestCase):
     def test_wrap_stdin_empty(self) -> None:
         self.assertEqual(prompt.wrap_stdin("q", "   "), "q")
 
+    def test_wrap_stdin_truncates_large_input_from_front(self) -> None:
+        big = "A" * 100 + "TAIL"
+        original = prompt.MAX_STDIN_CHARS
+        prompt.MAX_STDIN_CHARS = 10
+        try:
+            wrapped = prompt.wrap_stdin("q", big)
+        finally:
+            prompt.MAX_STDIN_CHARS = original
+        self.assertIn("truncated", wrapped)
+        self.assertIn("TAIL", wrapped)
+
 
 if __name__ == "__main__":
     unittest.main()

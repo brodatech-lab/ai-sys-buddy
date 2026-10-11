@@ -2,25 +2,35 @@
 
 from __future__ import annotations
 
-from typing import Sequence
+from contextlib import contextmanager
+from typing import Iterator, Sequence
 
 import questionary
 from rich.console import Console
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
 
-from .base import UI
+from .base import Status, UI
+
+
+class _RichStatus(Status):
+    def __init__(self, live_status) -> None:
+        self._status = live_status
+
+    def update(self, message: str) -> None:
+        self._status.update(message)
 
 
 class RichUI(UI):
     """Aimed at interactive terminals; falls back gracefully when piped."""
 
-    def __init__(self, color: bool = True) -> None:
+    def __init__(self, color: bool = True, code_theme: str = "monokai") -> None:
         super().__init__(color=color)
+        self.code_theme = code_theme
         self.console = Console(
             no_color=not color,
             highlight=False,
-            soft_wrap=True,
         )
 
     def print(self, text: str = "", style: str | None = None) -> None:
@@ -29,6 +39,36 @@ class RichUI(UI):
     def clear(self) -> None:
         if self.console.is_terminal:
             self.console.clear()
+
+    @contextmanager
+    def status(self, message: str) -> Iterator[Status]:
+        # A live spinner only makes sense on a real terminal; when piped we stay quiet.
+        if not self.console.is_terminal:
+            yield Status()
+            return
+        with self.console.status(message, spinner="dots") as live_status:
+            yield _RichStatus(live_status)
+
+    def render_markdown(self, text: str, title: str | None = None) -> None:
+        markdown = Markdown(text, code_theme=self.code_theme, hyperlinks=True)
+        if title:
+            self.console.print(
+                Panel(
+                    markdown,
+                    title=title,
+                    title_align="left",
+                    border_style="cyan",
+                    expand=True,
+                )
+            )
+        else:
+            self.console.print(markdown)
+
+    def pause(self, message: str = "Press Enter to continue") -> None:
+        try:
+            self.console.input(f"[dim]{message}[/] ")
+        except (EOFError, KeyboardInterrupt):
+            self.console.print()
 
     def banner(self, title: str, subtitle: str = "") -> None:
         text = Text(title, style="bold cyan")
@@ -72,7 +112,7 @@ class RichUI(UI):
 
     def stream_write(self, text: str, style: str | None = None) -> None:
         self.console.print(
-            text, end="", style=style, markup=False, highlight=False, soft_wrap=True
+            text, end="", style=style, markup=False, highlight=False
         )
 
     def stream_end(self) -> None:

@@ -40,6 +40,15 @@ class ConfigTests(unittest.TestCase):
             cfg = config.load_config(path)
             self.assertEqual(cfg.model, "m")
 
+    def test_defaults_include_rendering_options(self) -> None:
+        cfg = config.Config()
+        self.assertTrue(cfg.markdown)
+        self.assertEqual(cfg.code_theme, config.DEFAULT_CODE_THEME)
+
+    def test_validate_rejects_unknown_theme(self) -> None:
+        cfg = config.Config(code_theme="not-a-theme")
+        self.assertTrue(any("code_theme" in problem for problem in cfg.validate()))
+
     def test_invalid_json_returns_defaults(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "config.json"

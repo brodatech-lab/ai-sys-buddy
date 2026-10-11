@@ -11,6 +11,40 @@ workflow wydania, który publikuje opis z sekcji "What's New", "Fixed" i
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-10
+
+### What's New
+- Odpowiedzi i hasła encyklopedii są renderowane jako Markdown w ramce:
+  nagłówki, listy, wyróżnienia i bloki kodu z kolorowaniem składni.
+- Podczas generowania pokazywany jest spinner („Thinking..." → „Answering...").
+- Motyw kolorowania kodu wybierany przez `--theme NAME` lub w ustawieniach;
+  flaga `--no-markdown` (i `markdown = false`) zostawia poprzedni, goły
+  strumień tekstu.
+- Lokalna telemetria sprzętowa: po włączeniu w ustawieniach pod każdą
+  odpowiedzią pokazuje się panel `telemetry` (CPU, rdzenie, RAM, GPU oraz pełne
+  metryki - czasy load/eval, tokeny i tokeny/s). Wszystko zostaje na maszynie,
+  bez wysyłki.
+- `ai perf` mierzy wybrany model, a `ai perf all` wszystkie zainstalowane,
+  wypisując tabelę porównawczą (czas ładowania, tokeny, tokeny/s).
+
+### Fixed
+- Odpowiedzi w Markdownie są teraz zawijane do szerokości terminala zamiast
+  ucinane na prawej krawędzi.
+- Wejście z potoku jest teraz czytane w całości (blokująco), więc potoki jak
+  `sudo journalctl -n 50 | ai "co tu się dzieje?"` zawierają dane z góry zamiast
+  pustego zapytania. Pokazywana jest liczba dołączonych linii, a bardzo duże
+  wejścia są przycinane od początku.
+- Akcje ustawień, które coś wypisują (np. „Test Ollama connection"), teraz
+  pauzują, aby komunikat był widoczny przed ponownym rysowaniem panelu.
+
+### Changed
+- Odpowiedzi diagnostyczne są teraz domyślnie formatowane Markdownem w ramce
+  zamiast strumieniowania gołego tekstu.
+- Kolejność w menu ustawień: „Test Ollama connection" pod adresem Ollamy,
+  „Manage loaded models" pod modelem, a „Code theme" pod backendem UI.
+- Przepisana dokumentacja (instalacja podzielona na systemy, rozwinięte użycie),
+  a instalator Windows nie wymaga już tokena GitHub.
+
 ## [0.1.2] - 2026-10-10
 
 ### What's New
@@ -68,7 +102,8 @@ workflow wydania, który publikuje opis z sekcji "What's New", "Fixed" i
 ### Changed
 - Na razie brak.
 
-[Unreleased]: https://github.com/brodatech-lab/ai-sys-buddy/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/brodatech-lab/ai-sys-buddy/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.3
 [0.1.2]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.2
 [0.1.1]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.1
 [0.1.0]: https://github.com/brodatech-lab/ai-sys-buddy/releases/tag/v0.1.0
