@@ -15,7 +15,7 @@ uczy komend i pokazuje metryki wydajności modeli.
 > przeglądasz i uruchamiasz ręcznie. Nic nie jest wysyłane poza Twój serwer
 > Ollama.
 
-## Użycie
+## Jak go używać
 
 ### Zadaj pytanie
 
